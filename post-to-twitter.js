@@ -15,6 +15,26 @@ const client = new TwitterApi({
 const rwClient = client.readWrite;
 
 /**
+ * マークダウン記号を削除（プレーンテキスト化）
+ */
+function stripMarkdown(text) {
+  return text
+    .replace(/XRP Ledger（XRPL）/g, 'XRPL') // XRP Ledger（XRPL） → XRPL
+    .replace(/\*\*/g, '')        // **太字** → 太字
+    .replace(/\*/g, '')          // *イタリック* → イタリック
+    .replace(/__/g, '')          // __太字__ → 太字
+    .replace(/_/g, '')           // _イタリック_ → イタリック
+    .replace(/`/g, '')           // `コード` → コード
+    .replace(/#+\s/g, '')        // # ヘッダー → ヘッダー
+    .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1') // [リンク](url) → リンク
+    .replace(/!\[([^\]]*)\]\([^\)]+\)/g, '') // ![画像](url) → 削除
+    .replace(/>/g, '')           // > 引用 → 引用
+    .replace(/^-\s/gm, '• ')     // - リスト → • リスト
+    .replace(/^\d+\.\s/gm, '')   // 1. リスト → リスト
+    .replace(/XRP Ledger/g, 'XRPL'); // 残りのXRP Ledger → XRPL に統一
+}
+
+/**
  * 昨日生成された記事ファイルを取得
  */
 function getYesterdayArticleFile() {
@@ -47,6 +67,9 @@ function extractComment(content) {
   const sentences = firstPara.match(/[^。！？]+[。！？]/g) || [firstPara];
   
   let comment = sentences.slice(0, 2).join('').trim();
+  
+  // マークダウンを削除
+  comment = stripMarkdown(comment);
   
   if (comment.length > 150) {
     comment = comment.substring(0, 147) + '…';
